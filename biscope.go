@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 
+	gobiscope "github.com/abhishekkr/biscope/gobiscope"
 	golbin "github.com/abhishekkr/gol/golbin"
 )
 
@@ -22,6 +23,8 @@ func main() {
 	www_data_uri := fmt.Sprintf("/%s/", *www_data)
 	media_content_uri := fmt.Sprintf("/%s/", *media_content)
 	dashr_config_uri := fmt.Sprintf("/%s/", *dashr_config)
+
+	gobiscope.LoadMediaList("/home/abhishekkr/Downloads")
 
 	dashr_fs := http.FileServer(http.Dir(*www_data))
 	http.Handle(www_data_uri, http.StripPrefix(www_data_uri, dashr_fs))
@@ -41,7 +44,12 @@ func main() {
 }
 
 /****/
-func exec(command string) string {
+func play(mediapath string) string {
+	if !gobiscope.MediaAvailable(mediapath) {
+		return ""
+	}
+	//command := fmt.Sprintf("omxplayer %s", mediapath)
+	command := fmt.Sprintf("mplayer %s", mediapath)
 	kon := golbin.Console{Command: command}
 	fmt.Println("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::")
 	kon.Run()
@@ -52,10 +60,10 @@ func exec(command string) string {
 
 func handleSystem(res http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
-	_command := req.FormValue("command")
-	_output := exec(_command)
+	_mediapath := req.FormValue("mediapath")
+	_output := play(_mediapath)
 
-	data, _ := json.Marshal(fmt.Sprintf("{\"command\":	\"%s\"}", _output))
+	data, _ := json.Marshal(fmt.Sprintf("{\"media\":	\"%s\"}", _output))
 	res.Header().Set("Content-Type", "application/json; charset=utf-8")
 	res.Write(data)
 }
